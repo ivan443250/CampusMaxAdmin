@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админ-панель вуза</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Стили -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <!-- Инициализация и логика -->
+    <script defer src="js/firebase-init.js"></script>
+    <script defer src="js/app.js"></script>
+</head>
+<body>
+
+<div class="card" id="login-panel">
+    <h1>Вход администратора</h1>
+    <p class="subtitle">
+        Войдите по своему логину и паролю.
+        Права администратора определяются полями <code>role</code> и <code>universityId</code> в коллекции <code>users</code>.
+    </p>
+
+    <form id="login-form">
+        <label for="login">Логин</label>
+        <input id="login" type="text" required autocomplete="username" />
+
+        <label for="password">Пароль</label>
+        <input id="password" type="password" required autocomplete="current-password" />
+
+        <button type="submit">Войти как администратор</button>
+        <div class="status" id="login-status"></div>
+    </form>
+</div>
+
+<div class="card hidden" id="admin-panel">
+    <h1>Админ-панель вуза</h1>
+    <p class="subtitle meta">
+        Пользователь: <span id="admin-email"></span><br>
+        ID документа пользователя: <span id="admin-uid"></span><br>
+        ID вуза: <span id="university-id"></span><br>
+        Разрешено редактировать только:
+        <code>/universities/<span id="university-id-inline"></span></code>
+    </p>
+
+    <label for="university-name">Название вуза</label>
+    <input id="university-name" type="text" />
+
+    <label for="university-description">Описание / информация о вузе</label>
+    <textarea id="university-description"></textarea>
+
+    <div class="buttons-row">
+        <button id="save-university">Сохранить изменения</button>
+        <button class="secondary" id="logout" type="button">Выйти</button>
+    </div>
+
+    <div class="status" id="admin-status"></div>
+</div>
+
+</body>
+</html>
