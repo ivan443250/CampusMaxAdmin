@@ -13,6 +13,5 @@ const firebaseConfig = {
 // Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Удобные глобальные ссылки
-window.auth = firebase.auth();
+// Только Firestore
 window.db = firebase.firestore();
