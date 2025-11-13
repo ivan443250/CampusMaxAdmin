@@ -15,7 +15,7 @@ body {
     border-radius: 16px;
     padding: 24px 28px;
     width: 100%;
-    max-width: 520px;
+    max-width: 800px;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
     border: 1px solid rgba(148, 163, 184, 0.25);
     backdrop-filter: blur(18px);
@@ -28,6 +28,11 @@ body {
 h1 {
     margin: 0 0 12px 0;
     font-size: 24px;
+}
+
+h2 {
+    margin: 12px 0 8px 0;
+    font-size: 20px;
 }
 
 .subtitle {
@@ -49,7 +54,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
     width: 100%;
     box-sizing: border-box;
     padding: 10px 12px;
@@ -62,13 +68,14 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
     border-color: #60a5fa;
     box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.4);
 }
 
 textarea {
-    min-height: 150px;
+    min-height: 120px;
     resize: vertical;
 }
 
@@ -116,4 +123,65 @@ code {
     padding: 2px 6px;
     border-radius: 6px;
     font-size: 12px;
+}
+
+.divider {
+    margin: 24px 0 16px 0;
+    border: none;
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+/* Расписание */
+
+.schedule-form {
+    margin-bottom: 16px;
+}
+
+.schedule-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.schedule-col {
+    flex: 1 1 180px;
+}
+
+/* Таблица расписания */
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 13px;
+}
+
+.schedule-table thead {
+    background: rgba(15, 23, 42, 0.9);
+}
+
+.schedule-table th,
+.schedule-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.9);
+    text-align: left;
+}
+
+.schedule-table tr:nth-child(even) {
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.schedule-table tr:nth-child(odd) {
+    background: rgba(15, 23, 42, 0.3);
+}
+
+.schedule-table .actions-cell button {
+    margin-top: 0;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 999px;
+}
+
+.schedule-table .actions-cell button + button {
+    margin-left: 4px;
 }

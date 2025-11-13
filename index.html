@@ -22,7 +22,8 @@
     <h1>Вход администратора</h1>
     <p class="subtitle">
         Войдите по своему логину и паролю.
-        Права администратора определяются полями <code>role</code> и <code>universityId</code> в коллекции <code>users</code>.
+        Права администратора определяются полями
+        <code>role</code> и <code>universityId</code> в коллекции <code>users</code>.
     </p>
 
     <form id="login-form">
@@ -47,6 +48,7 @@
         <code>/universities/<span id="university-id-inline"></span></code>
     </p>
 
+    <!-- Информация о вузе -->
     <label for="university-name">Название вуза</label>
     <input id="university-name" type="text" />
 
@@ -54,11 +56,87 @@
     <textarea id="university-description"></textarea>
 
     <div class="buttons-row">
-        <button id="save-university">Сохранить изменения</button>
+        <button id="save-university" type="button">Сохранить информацию о вузе</button>
         <button class="secondary" id="logout" type="button">Выйти</button>
     </div>
 
     <div class="status" id="admin-status"></div>
+
+    <hr class="divider" />
+
+    <!-- БЛОК РАСПИСАНИЯ -->
+    <h2>Расписание вуза</h2>
+    <p class="subtitle">
+        Здесь администратор может добавлять, редактировать и удалять пары
+        только для своего вуза.
+    </p>
+
+    <div class="schedule-form">
+        <div class="schedule-row">
+            <div class="schedule-col">
+                <label for="schedule-day">День недели</label>
+                <select id="schedule-day">
+                    <option value="1">Понедельник</option>
+                    <option value="2">Вторник</option>
+                    <option value="3">Среда</option>
+                    <option value="4">Четверг</option>
+                    <option value="5">Пятница</option>
+                    <option value="6">Суббота</option>
+                    <option value="7">Воскресенье</option>
+                </select>
+            </div>
+            <div class="schedule-col">
+                <label for="schedule-group">Группа</label>
+                <input id="schedule-group" type="text" placeholder="например, ПИ-101" />
+            </div>
+        </div>
+
+        <div class="schedule-row">
+            <div class="schedule-col">
+                <label for="schedule-start">Начало пары</label>
+                <input id="schedule-start" type="time" />
+            </div>
+            <div class="schedule-col">
+                <label for="schedule-end">Конец пары</label>
+                <input id="schedule-end" type="time" />
+            </div>
+        </div>
+
+        <label for="schedule-subject">Предмет</label>
+        <input id="schedule-subject" type="text" placeholder="Математический анализ" />
+
+        <label for="schedule-teacher">Преподаватель</label>
+        <input id="schedule-teacher" type="text" placeholder="Петров П. П." />
+
+        <label for="schedule-room">Аудитория</label>
+        <input id="schedule-room" type="text" placeholder="А-101" />
+
+        <div class="buttons-row">
+            <button id="schedule-save" type="button">Добавить в расписание</button>
+            <button id="schedule-cancel" type="button" class="secondary hidden">
+                Отмена редактирования
+            </button>
+        </div>
+
+        <div class="status" id="schedule-status"></div>
+    </div>
+
+    <table class="schedule-table">
+        <thead>
+        <tr>
+            <th>День</th>
+            <th>Время</th>
+            <th>Группа</th>
+            <th>Предмет</th>
+            <th>Преподаватель</th>
+            <th>Аудитория</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody id="schedule-table-body">
+        <!-- строки с парами будут подставляться из JS -->
+        </tbody>
+    </table>
 </div>
 
 </body>
