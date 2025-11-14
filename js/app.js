@@ -447,6 +447,11 @@
     function deleteLesson(groupKey, weekKey, dayKey, lessonId) {
     if (!currentUniversityId || !lessonId) return;
 
+    console.log("groupKey: ", groupKey);
+    console.log("weekKey: ", weekKey);
+    console.log("dayKey: ", dayKey);
+    console.log("lessonId: ", lessonId);
+
     // Подтверждение удаления
     var confirmed = window.confirm("Удалить эту пару из расписания?");
     if (!confirmed) return;
@@ -460,11 +465,13 @@
         .collection(weekKey)
         .doc(dayKey);
 
+    console.log("Путь к документу для удаления: ", dayRef.path);
+
     dayRef
         .get() // Получаем текущее расписание для дня
         .then(function (doc) {
             if (!doc.exists) {
-                console.log("Документ не существует");
+                console.log("Документ не существует по пути:", dayRef.path);
                 return;
             }
 
@@ -476,7 +483,6 @@
                 return lesson.id !== lessonId;
             });
 
-            // Проверка перед отправкой данных
             console.log("Обновленные уроки: ", updatedLessons);
 
             // Обновляем день в базе данных с новым списком уроков
@@ -496,6 +502,7 @@
             setScheduleStatus("Ошибка удаления: " + error.message, true);
         });
 }
+
 
 
 
