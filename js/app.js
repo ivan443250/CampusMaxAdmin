@@ -19,7 +19,6 @@
     var saveUniversityButton = document.getElementById("save-university");
     var logoutButton = document.getElementById("logout");
 
-    // --- элементы расписания ---
     var scheduleWeekSelect = document.getElementById("schedule-week");
     var scheduleDaySelect = document.getElementById("schedule-day");
     var scheduleGroupInput = document.getElementById("schedule-group");
@@ -33,17 +32,15 @@
     var scheduleStatus = document.getElementById("schedule-status");
     var scheduleTableBody = document.getElementById("schedule-table-body");
 
-    var currentUser = null;          // { id, login, fullName, role, universityId, group }
+    var currentUser = null;
     var currentUniversityId = null;
 
-    // что сейчас редактируем
     var editingWeekKey = null;
     var editingDayKey = null;
     var editingLessonId = null;
+    var editingGroupKey = null;
 
-    // Кэш расписания текущей недели:
-    // { "1": [ {id, ...}, ... ], "2": [...], ... }
-    var scheduleByDay = {};
+    var scheduleByDay = {}; // { "1": [lessons...], "2": [...] }
 
     var dayNames = {
         1: "Понедельник",
@@ -57,6 +54,14 @@
 
     function getCurrentWeekKey() {
         return (scheduleWeekSelect && scheduleWeekSelect.value) || "even";
+    }
+
+    function getCurrentGroupKey() {
+        if (currentUser && currentUser.group) {
+            return currentUser.group;
+        }
+        var g = scheduleGroupInput ? scheduleGroupInput.value.trim() : "";
+        return g || "DEFAULT_GROUP";
     }
 
     function generateLessonId() {
@@ -74,6 +79,7 @@
         editingWeekKey = null;
         editingDayKey = null;
         editingLessonId = null;
+        editingGroupKey = null;
         scheduleByDay = {};
     }
 
@@ -106,7 +112,7 @@
         scheduleStatus.classList.add(isError ? "err" : "ok");
     }
 
-    // ---------------- ВХОД ----------------
+    // ---------- ВХОД ----------
 
     if (loginForm) {
         loginForm.addEventListener("submit", function (e) {
@@ -134,7 +140,6 @@
                     var doc = querySnapshot.docs[0];
                     var data = doc.data();
 
-                    // учебный пример: пароль в лоб
                     if (data.password !== password) {
                         throw new Error("Неверный пароль");
                     }
@@ -189,7 +194,7 @@
                         );
                     }
 
-                    return loadSchedule(); // загрузим расписание для выбранной недели (по умолчанию even)
+                    return loadSchedule();
                 })
                 .catch(function (error) {
                     console.error("Ошибка входа:", error);
@@ -198,7 +203,7 @@
         });
     }
 
-    // ----------- СОХРАНЕНИЕ ИНФЫ О ВУЗЕ -----------
+    // ---------- СОХРАНЕНИЕ ИНФЫ О ВУЗЕ ----------
 
     if (saveUniversityButton) {
         saveUniversityButton.addEventListener("click", function () {
@@ -232,7 +237,7 @@
         });
     }
 
-    // ---------------- ВЫХОД ----------------
+    // ---------- ВЫХОД ----------
 
     if (logoutButton) {
         logoutButton.addEventListener("click", function () {
@@ -240,14 +245,14 @@
         });
     }
 
-    // ------------ РАСПИСАНИЕ: CRUD ------------
+    // ---------- РАСПИСАНИЕ ----------
 
     function clearScheduleForm() {
         if (!scheduleDaySelect) return;
 
         scheduleDaySelect.value = "1";
         if (!currentUser || !currentUser.group) {
-            scheduleGroupInput.value = "";
+            scheduleGroupInput.value = scheduleGroupInput.value || "";
         } else {
             scheduleGroupInput.value = currentUser.group;
         }
@@ -260,29 +265,35 @@
         editingWeekKey = null;
         editingDayKey = null;
         editingLessonId = null;
+        editingGroupKey = null;
 
         scheduleSaveButton.textContent = "Добавить в расписание";
         scheduleCancelButton.classList.add("hidden");
         setScheduleStatus("");
     }
 
-    // чтение: schedule/{weekKey}/days/{dayKey}.lessons
+    // чтение: universities/{universityId}/schedule/{groupId}/{weekKey}/{dayKey}
     function loadSchedule() {
         if (!currentUniversityId || !scheduleTableBody) {
             return Promise.resolve();
         }
 
         var weekKey = getCurrentWeekKey();
+        var groupKey = getCurrentGroupKey();
+
         scheduleByDay = {};
 
-        setScheduleStatus("Загружаем расписание для недели: " + weekKey, false);
+        setScheduleStatus(
+            "Загружаем расписание: группа " + groupKey + ", неделя " + weekKey,
+            false
+        );
 
         var daysRef = db
             .collection("universities")
             .doc(currentUniversityId)
             .collection("schedule")
-            .doc(weekKey)
-            .collection("days");
+            .doc(groupKey)
+            .collection(weekKey);
 
         return daysRef
             .get()
@@ -292,7 +303,6 @@
                     var data = doc.data() || {};
                     var lessons = Array.isArray(data.lessons) ? data.lessons : [];
 
-                    // доприсвоим id, если вдруг не было
                     lessons = lessons.map(function (lesson) {
                         if (!lesson.id) {
                             lesson.id = generateLessonId();
@@ -327,7 +337,6 @@
 
             hasLessons = true;
 
-            // заголовок дня
             var headerTr = document.createElement("tr");
             var headerTd = document.createElement("td");
             headerTd.colSpan = 7;
@@ -349,7 +358,7 @@
                 var tdRoom = document.createElement("td");
                 var tdActions = document.createElement("td");
 
-                tdDay.textContent = ""; // день уже в заголовке
+                tdDay.textContent = "";
                 tdTime.textContent =
                     (lesson.startTime || "") +
                     (lesson.endTime ? " — " + lesson.endTime : "");
@@ -360,11 +369,13 @@
 
                 tdActions.className = "actions-cell";
 
+                var groupKey = getCurrentGroupKey();
+
                 var editBtn = document.createElement("button");
                 editBtn.type = "button";
                 editBtn.textContent = "Изм.";
                 editBtn.addEventListener("click", function () {
-                    startEditLesson(weekKey, dayKey, lesson);
+                    startEditLesson(groupKey, weekKey, dayKey, lesson);
                 });
 
                 var deleteBtn = document.createElement("button");
@@ -372,7 +383,7 @@
                 deleteBtn.textContent = "X";
                 deleteBtn.classList.add("secondary");
                 deleteBtn.addEventListener("click", function () {
-                    deleteLesson(weekKey, dayKey, lesson.id);
+                    deleteLesson(groupKey, weekKey, dayKey, lesson.id);
                 });
 
                 tdActions.appendChild(editBtn);
@@ -394,21 +405,28 @@
             var tr = document.createElement("tr");
             var td = document.createElement("td");
             td.colSpan = 7;
-            td.textContent = "Расписание пока пустое для выбранной недели.";
+            td.textContent = "Расписание пока пустое для выбранной недели и группы.";
             tr.appendChild(td);
             scheduleTableBody.appendChild(tr);
         }
     }
 
-    function startEditLesson(weekKey, dayKey, lesson) {
+    function startEditLesson(groupKey, weekKey, dayKey, lesson) {
+        editingGroupKey = groupKey;
         editingWeekKey = weekKey;
         editingDayKey = dayKey;
         editingLessonId = lesson.id;
 
-        scheduleWeekSelect.value = weekKey;
-        scheduleDaySelect.value = dayKey;
+        if (scheduleWeekSelect) {
+            scheduleWeekSelect.value = weekKey;
+        }
+        if (scheduleDaySelect) {
+            scheduleDaySelect.value = dayKey;
+        }
+        if (scheduleGroupInput) {
+            scheduleGroupInput.value = lesson.group || groupKey;
+        }
 
-        scheduleGroupInput.value = lesson.group || "";
         scheduleStartInput.value = lesson.startTime || "";
         scheduleEndInput.value = lesson.endTime || "";
         scheduleSubjectInput.value = lesson.subject || "";
@@ -420,22 +438,22 @@
         setScheduleStatus("Редактирование пары", false);
     }
 
-    function deleteLesson(weekKey, dayKey, lessonId) {
+    function deleteLesson(groupKey, weekKey, dayKey, lessonId) {
         if (!currentUniversityId || !lessonId) return;
 
         var confirmed = window.confirm("Удалить эту пару из расписания?");
         if (!confirmed) return;
 
-        var dayLessons = scheduleByDay[dayKey] || [];
-        var updated = dayLessons.filter(function (l) { return l.id !== lessonId; });
+        var lessons = scheduleByDay[dayKey] || [];
+        var updated = lessons.filter(function (l) { return l.id !== lessonId; });
         scheduleByDay[dayKey] = updated;
 
         var dayRef = db
             .collection("universities")
             .doc(currentUniversityId)
             .collection("schedule")
-            .doc(weekKey)
-            .collection("days")
+            .doc(groupKey)
+            .collection(weekKey)
             .doc(dayKey);
 
         dayRef
@@ -464,14 +482,19 @@
             var day = parseInt(scheduleDaySelect.value, 10);
             var dayKey = editingLessonId ? editingDayKey : String(day);
 
-            var group = scheduleGroupInput.value.trim();
+            var groupTyped = scheduleGroupInput.value.trim();
+            var baseGroupKey = getCurrentGroupKey();
+            var groupKey = editingLessonId ? editingGroupKey : (groupTyped || baseGroupKey);
+
+            var groupFieldValue = groupTyped || baseGroupKey;
+
             var startTime = scheduleStartInput.value;
             var endTime = scheduleEndInput.value;
             var subject = scheduleSubjectInput.value.trim();
             var teacher = scheduleTeacherInput.value.trim();
             var room = scheduleRoomInput.value.trim();
 
-            if (!weekKey || !day || !group || !startTime || !subject) {
+            if (!weekKey || !day || !groupKey || !startTime || !subject) {
                 setScheduleStatus("Обязательные поля: неделя, день, группа, начало пары, предмет.", true);
                 return;
             }
@@ -480,7 +503,7 @@
 
             var lessonData = {
                 id: lessonId,
-                group: group,
+                group: groupFieldValue,
                 startTime: startTime,
                 endTime: endTime || "",
                 subject: subject,
@@ -488,24 +511,24 @@
                 room: room
             };
 
-            var dayLessons = scheduleByDay[dayKey] ? scheduleByDay[dayKey].slice() : [];
+            var lessons = scheduleByDay[dayKey] ? scheduleByDay[dayKey].slice() : [];
 
             if (editingLessonId) {
-                dayLessons = dayLessons.map(function (l) {
+                lessons = lessons.map(function (l) {
                     return l.id === lessonId ? lessonData : l;
                 });
             } else {
-                dayLessons.push(lessonData);
+                lessons.push(lessonData);
             }
 
-            scheduleByDay[dayKey] = dayLessons;
+            scheduleByDay[dayKey] = lessons;
 
             var dayRef = db
                 .collection("universities")
                 .doc(currentUniversityId)
                 .collection("schedule")
-                .doc(weekKey)
-                .collection("days")
+                .doc(groupKey)
+                .collection(weekKey)
                 .doc(dayKey);
 
             setScheduleStatus("Сохраняем пару...", false);
@@ -513,7 +536,7 @@
             dayRef
                 .set(
                     {
-                        lessons: dayLessons,
+                        lessons: lessons,
                         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                     },
                     { merge: true }
@@ -536,7 +559,7 @@
         });
     }
 
-    // при смене недели просто перезагружаем расписание
+    // смена недели → другая ветка schedule/{group}/{week}
     if (scheduleWeekSelect) {
         scheduleWeekSelect.addEventListener("change", function () {
             clearScheduleForm();
@@ -544,6 +567,14 @@
         });
     }
 
-    // При загрузке — форма логина
+    // если поменяли группу в поле и хотим увидеть её расписание —
+    // можно просто перезагрузить расписание по новой группе
+    if (scheduleGroupInput) {
+        scheduleGroupInput.addEventListener("change", function () {
+            clearScheduleForm();
+            loadSchedule();
+        });
+    }
+
     showLogin();
 })();
