@@ -67,12 +67,19 @@
     <!-- БЛОК РАСПИСАНИЯ -->
     <h2>Расписание вуза</h2>
     <p class="subtitle">
-        Здесь администратор может добавлять, редактировать и удалять пары
-        только для своего вуза.
+        Расписание хранится по структуре:
+        <code>schedule/{even|odd}/days/{1..7}/lessons[]</code>.
     </p>
 
     <div class="schedule-form">
         <div class="schedule-row">
+            <div class="schedule-col">
+                <label for="schedule-week">Неделя</label>
+                <select id="schedule-week">
+                    <option value="even">Чётная неделя</option>
+                    <option value="odd">Нечётная неделя</option>
+                </select>
+            </div>
             <div class="schedule-col">
                 <label for="schedule-day">День недели</label>
                 <select id="schedule-day">
@@ -134,6 +141,10 @@
         </tr>
         </thead>
         <tbody id="schedule-table-body">
+        <!-- строки заполняет JS -->
+        </tbody>
+    </table>
+
         <!-- строки с парами будут подставляться из JS -->
         </tbody>
     </table>
