@@ -447,9 +447,11 @@
     function deleteLesson(groupKey, weekKey, dayKey, lessonId) {
         if (!currentUniversityId || !lessonId) return;
 
+        // Подтверждение удаления
         var confirmed = window.confirm("Удалить эту пару из расписания?");
         if (!confirmed) return;
 
+        // Ссылка на день в расписании
         var dayRef = db
             .collection("universities")
             .doc(currentUniversityId)
@@ -459,29 +461,33 @@
             .doc(dayKey);
 
         dayRef
-            .get()
+            .get() // Получаем текущее расписание для дня
             .then(function (doc) {
                 var data = doc.data() || {};
                 var lessons = Array.isArray(data.lessons) ? data.lessons : [];
 
-                var updated = lessons.filter(function (l) {
-                    return l.id !== lessonId;
+                // Фильтруем уроки, исключая удаляемый
+                var updatedLessons = lessons.filter(function (lesson) {
+                    return lesson.id !== lessonId;
                 });
 
-                return dayRef.set({ lessons: updated }, { merge: true });
+                // Обновляем день в базе данных с новым списком уроков
+                return dayRef.set({ lessons: updatedLessons }, { merge: true });
             })
             .then(function () {
+                // После успешного удаления, обновляем UI
                 setScheduleStatus("Пара удалена", false);
                 if (editingLessonId === lessonId) {
-                    clearScheduleForm();
+                    clearScheduleForm(); // Очистка формы редактирования, если редактировали эту пару
                 }
-                return loadSchedule();
+                return loadSchedule(); // Перезагружаем расписание
             })
             .catch(function (error) {
                 console.error("Ошибка удаления пары:", error);
                 setScheduleStatus("Ошибка удаления: " + error.message, true);
             });
     }
+
 
     if (scheduleSaveButton) {
         scheduleSaveButton.addEventListener("click", function () {
