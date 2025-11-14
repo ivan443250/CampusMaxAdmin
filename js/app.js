@@ -1,5 +1,3 @@
-// js/app.js
-
 (function () {
     var loginPanel = document.getElementById("login-panel");
     var adminPanel = document.getElementById("admin-panel");
@@ -148,7 +146,6 @@
                     var doc = querySnapshot.docs[0];
                     var data = doc.data();
 
-                    // учебный вариант: пароль как есть
                     if (data.password !== password) {
                         throw new Error("Неверный пароль");
                     }
@@ -261,7 +258,6 @@
         if (!scheduleDaySelect) return;
 
         scheduleDaySelect.value = "1";
-        // ГРУППУ БОЛЬШЕ НЕ ТРОГАЕМ — админ сам выбирает любую
         scheduleStartInput.value = "";
         scheduleEndInput.value = "";
         scheduleSubjectInput.value = "";
@@ -278,7 +274,6 @@
         setScheduleStatus("");
     }
 
-    // чтение: universities/{universityId}/schedule/{groupId}/{weekKey}/{dayKey}
     function loadSchedule() {
         if (!currentUniversityId || !scheduleTableBody) {
             return Promise.resolve();
@@ -388,7 +383,7 @@
                 deleteBtn.textContent = "X";
                 deleteBtn.classList.add("secondary");
                 deleteBtn.addEventListener("click", function () {
-                    deleteLesson(groupKey, weekKey, dayKey, lesson.id);
+                    deleteLesson(groupKey, weekKey, dayKey, lesson.id);  // Передаем правильный dayKey
                 });
 
                 tdActions.appendChild(editBtn);
@@ -443,68 +438,47 @@
         setScheduleStatus("Редактирование пары", false);
     }
 
-    // удаление читаем прямо из БД, чтобы не было рассинхрона
+    // Удаление пары
     function deleteLesson(groupKey, weekKey, dayKey, lessonId) {
-    if (!currentUniversityId || !lessonId) return;
+        if (!currentUniversityId || !lessonId) return;
 
-    console.log("groupKey: ", groupKey);
-    console.log("weekKey: ", weekKey);
-    console.log("dayKey: ", dayKey);
-    console.log("lessonId: ", lessonId);
+        var confirmed = window.confirm("Удалить эту пару из расписания?");
+        if (!confirmed) return;
 
-    // Подтверждение удаления
-    var confirmed = window.confirm("Удалить эту пару из расписания?");
-    if (!confirmed) return;
+        var dayRef = db
+            .collection("universities")
+            .doc(currentUniversityId)
+            .collection("schedule")
+            .doc(groupKey)
+            .collection(weekKey)
+            .doc(dayKey);
 
-    // Ссылка на день в расписании
-    var dayRef = db
-        .collection("universities")
-        .doc(currentUniversityId)
-        .collection("schedule")
-        .doc(groupKey)
-        .collection(weekKey)
-        .doc(dayKey);
+        dayRef
+            .get()
+            .then(function (doc) {
+                if (!doc.exists) {
+                    console.log("Документ не существует по пути:", dayRef.path);
+                    return;
+                }
 
-    console.log("Путь к документу для удаления: ", dayRef.path);
+                var data = doc.data() || {};
+                var lessons = Array.isArray(data.lessons) ? data.lessons : [];
 
-    dayRef
-        .get() // Получаем текущее расписание для дня
-        .then(function (doc) {
-            if (!doc.exists) {
-                console.log("Документ не существует по пути:", dayRef.path);
-                return;
-            }
+                var updatedLessons = lessons.filter(function (lesson) {
+                    return lesson.id !== lessonId;
+                });
 
-            var data = doc.data() || {};
-            var lessons = Array.isArray(data.lessons) ? data.lessons : [];
-
-            // Фильтруем уроки, исключая удаляемый
-            var updatedLessons = lessons.filter(function (lesson) {
-                return lesson.id !== lessonId;
+                return dayRef.set({ lessons: updatedLessons }, { merge: true });
+            })
+            .then(function () {
+                setScheduleStatus("Пара удалена", false);
+                return loadSchedule();
+            })
+            .catch(function (error) {
+                console.error("Ошибка удаления пары:", error);
+                setScheduleStatus("Ошибка удаления: " + error.message, true);
             });
-
-            console.log("Обновленные уроки: ", updatedLessons);
-
-            // Обновляем день в базе данных с новым списком уроков
-            return dayRef.set({ lessons: updatedLessons }, { merge: true });
-        })
-        .then(function () {
-            console.log("Пара удалена");
-            // После успешного удаления, обновляем UI
-            setScheduleStatus("Пара удалена", false);
-            if (editingLessonId === lessonId) {
-                clearScheduleForm(); // Очистка формы редактирования, если редактировали эту пару
-            }
-            return loadSchedule(); // Перезагружаем расписание
-        })
-        .catch(function (error) {
-            console.error("Ошибка удаления пары:", error);
-            setScheduleStatus("Ошибка удаления: " + error.message, true);
-        });
-}
-
-
-
+    }
 
     if (scheduleSaveButton) {
         scheduleSaveButton.addEventListener("click", function () {
@@ -519,7 +493,6 @@
 
             var groupTyped = scheduleGroupInput.value.trim();
             var groupKey = editingLessonId ? editingGroupKey : (groupTyped || "DEFAULT_GROUP");
-            var groupFieldValue = groupTyped || groupKey;
 
             var startTime = scheduleStartInput.value;
             var endTime = scheduleEndInput.value;
@@ -536,7 +509,7 @@
 
             var lessonData = {
                 id: lessonId,
-                group: groupFieldValue,
+                group: groupKey,
                 startTime: startTime,
                 endTime: endTime || "",
                 subject: subject,
@@ -552,9 +525,6 @@
                 .collection(weekKey)
                 .doc(dayKey);
 
-            setScheduleStatus("Сохраняем пару...", false);
-
-            // читаем актуальный список из БД и обновляем
             dayRef
                 .get()
                 .then(function (doc) {
