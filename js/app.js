@@ -332,12 +332,10 @@
         var groupKey = getCurrentGroupKey();
         var hasLessons = false;
 
-        for (var day = 1; day <= 7; day++) {
+        for (let day = 1; day <= 7; day++) {
             var dayKey = String(day);
             var lessons = scheduleByDay[dayKey] || [];
             if (!lessons.length) continue;
-
-            console.log(dayKey);
 
             hasLessons = true;
 
