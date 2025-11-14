@@ -2,85 +2,60 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админ-панель вуза</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Стили -->
+    <title>Панель администратора</title>
     <link rel="stylesheet" href="css/styles.css">
-
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-    <!-- Инициализация и логика -->
-    <script defer src="js/firebase-init.js"></script>
-    <script defer src="js/app.js"></script>
 </head>
 <body>
 
-<div class="card" id="login-panel">
-    <h1>Вход администратора</h1>
-    <p class="subtitle">
-        Войдите по своему логину и паролю.
-        Права администратора определяются полями
-        <code>role</code> и <code>universityId</code> в коллекции <code>users</code>.
-    </p>
+    <!-- Панель логина -->
+    <div id="login-panel">
+        <h2>Вход в систему</h2>
+        <form id="login-form">
+            <label for="login">Логин</label>
+            <input id="login" type="text" placeholder="Введите логин" required />
 
-    <form id="login-form">
-        <label for="login">Логин</label>
-        <input id="login" type="text" required autocomplete="username" />
+            <label for="password">Пароль</label>
+            <input id="password" type="password" placeholder="Введите пароль" required />
 
-        <label for="password">Пароль</label>
-        <input id="password" type="password" required autocomplete="current-password" />
-
-        <button type="submit">Войти как администратор</button>
-        <div class="status" id="login-status"></div>
-    </form>
-</div>
-
-<div class="card hidden" id="admin-panel">
-    <h1>Админ-панель вуза</h1>
-    <p class="subtitle meta">
-        Пользователь: <span id="admin-email"></span><br>
-        ID документа пользователя: <span id="admin-uid"></span><br>
-        ID вуза: <span id="university-id"></span><br>
-        Разрешено редактировать только:
-        <code>/universities/<span id="university-id-inline"></span></code>
-    </p>
-
-    <!-- Информация о вузе -->
-    <label for="university-name">Название вуза</label>
-    <input id="university-name" type="text" />
-
-    <label for="university-description">Описание / информация о вузе</label>
-    <textarea id="university-description"></textarea>
-
-    <div class="buttons-row">
-        <button id="save-university" type="button">Сохранить информацию о вузе</button>
-        <button class="secondary" id="logout" type="button">Выйти</button>
+            <button type="submit">Войти</button>
+        </form>
+        <div id="login-status" class="status"></div>
     </div>
 
-    <div class="status" id="admin-status"></div>
+    <!-- Панель администратора -->
+    <div id="admin-panel" class="hidden">
+        <!-- Панель с навигацией -->
+        <nav>
+            <button id="edit-university-info">Редактировать информацию о вузе</button>
+            <button id="edit-schedule-info">Редактировать расписание</button>
+        </nav>
 
-    <hr class="divider" />
+        <!-- Страница для редактирования информации о вузе -->
+        <div id="university-info" class="admin-page">
+            <h2>Редактирование информации о вузе</h2>
+            <label for="university-name">Название вуза</label>
+            <input id="university-name" type="text" placeholder="Введите название вуза" required />
 
-    <!-- БЛОК РАСПИСАНИЯ -->
-    <h2>Расписание вуза</h2>
-    <p class="subtitle">
-        Расписание хранится по структуре:
-        <code>schedule/{even|odd}/days/{1..7}/lessons[]</code>.
-    </p>
+            <label for="university-description">Описание</label>
+            <textarea id="university-description" placeholder="Введите описание" required></textarea>
 
-    <div class="schedule-form">
-        <div class="schedule-row">
-            <div class="schedule-col">
+            <button id="save-university" type="button">Сохранить информацию о вузе</button>
+
+            <div id="admin-status" class="status"></div>
+        </div>
+
+        <!-- Страница для редактирования расписания -->
+        <div id="schedule-info" class="admin-page hidden">
+            <h2>Редактирование расписания</h2>
+            <div>
                 <label for="schedule-week">Неделя</label>
                 <select id="schedule-week">
-                    <option value="even">Чётная неделя</option>
-                    <option value="odd">Нечётная неделя</option>
+                    <option value="even">Четная неделя</option>
+                    <option value="odd">Нечетная неделя</option>
                 </select>
             </div>
-            <div class="schedule-col">
+            <div>
                 <label for="schedule-day">День недели</label>
                 <select id="schedule-day">
                     <option value="1">Понедельник</option>
@@ -92,63 +67,58 @@
                     <option value="7">Воскресенье</option>
                 </select>
             </div>
-            <div class="schedule-col">
+            <div>
                 <label for="schedule-group">Группа</label>
-                <input id="schedule-group" type="text" placeholder="например, ПИ-101" />
+                <input id="schedule-group" type="text" placeholder="Например, ПИ-101" required />
             </div>
-        </div>
 
-        <div class="schedule-row">
-            <div class="schedule-col">
+            <div>
                 <label for="schedule-start">Начало пары</label>
-                <input id="schedule-start" type="time" />
+                <input id="schedule-start" type="time" required />
             </div>
-            <div class="schedule-col">
+            <div>
                 <label for="schedule-end">Конец пары</label>
-                <input id="schedule-end" type="time" />
+                <input id="schedule-end" type="time" required />
             </div>
-        </div>
+            <div>
+                <label for="schedule-subject">Предмет</label>
+                <input id="schedule-subject" type="text" placeholder="Математический анализ" required />
+            </div>
+            <div>
+                <label for="schedule-teacher">Преподаватель</label>
+                <input id="schedule-teacher" type="text" placeholder="Петров П. П." required />
+            </div>
+            <div>
+                <label for="schedule-room">Аудитория</label>
+                <input id="schedule-room" type="text" placeholder="А-101" required />
+            </div>
 
-        <label for="schedule-subject">Предмет</label>
-        <input id="schedule-subject" type="text" placeholder="Математический анализ" />
-
-        <label for="schedule-teacher">Преподаватель</label>
-        <input id="schedule-teacher" type="text" placeholder="Петров П. П." />
-
-        <label for="schedule-room">Аудитория</label>
-        <input id="schedule-room" type="text" placeholder="А-101" />
-
-        <div class="buttons-row">
             <button id="schedule-save" type="button">Добавить в расписание</button>
-            <button id="schedule-cancel" type="button" class="secondary hidden">
-                Отмена редактирования
-            </button>
-        </div>
+            <button id="schedule-cancel" type="button" class="secondary hidden">Отмена редактирования</button>
 
-        <div class="status" id="schedule-status"></div>
+            <div id="schedule-status" class="status"></div>
+
+            <!-- Таблица с расписанием -->
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>День</th>
+                        <th>Время</th>
+                        <th>Группа</th>
+                        <th>Предмет</th>
+                        <th>Преподаватель</th>
+                        <th>Аудитория</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="schedule-table-body">
+                    <!-- Заполняется через JS -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <table class="schedule-table">
-        <thead>
-        <tr>
-            <th>День</th>
-            <th>Время</th>
-            <th>Группа</th>
-            <th>Предмет</th>
-            <th>Преподаватель</th>
-            <th>Аудитория</th>
-            <th>Действия</th>
-        </tr>
-        </thead>
-        <tbody id="schedule-table-body">
-        <!-- строки заполняет JS -->
-        </tbody>
-    </table>
-
-        <!-- строки с парами будут подставляться из JS -->
-        </tbody>
-    </table>
-</div>
-
+    <script src="js/app.js"></script>
+    <script src="js/firebase-init.js"></script>
 </body>
 </html>

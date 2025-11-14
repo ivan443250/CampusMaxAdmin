@@ -4,22 +4,20 @@
     var loginPanel = document.getElementById("login-panel");
     var adminPanel = document.getElementById("admin-panel");
 
-    var loginForm = document.getElementById("login-form");
     var loginStatus = document.getElementById("login-status");
+    var loginForm = document.getElementById("login-form");
 
     var adminEmailEl = document.getElementById("admin-email");
     var adminUidEl = document.getElementById("admin-uid");
     var universityIdEl = document.getElementById("university-id");
     var universityIdInlineEl = document.getElementById("university-id-inline");
 
+    // Элементы редактирования информации о вузе
     var universityNameInput = document.getElementById("university-name");
     var universityDescriptionInput = document.getElementById("university-description");
-
-    var adminStatus = document.getElementById("admin-status");
     var saveUniversityButton = document.getElementById("save-university");
-    var logoutButton = document.getElementById("logout");
 
-    // Расписание
+    // Элементы редактирования расписания
     var scheduleWeekSelect = document.getElementById("schedule-week");
     var scheduleDaySelect = document.getElementById("schedule-day");
     var scheduleGroupInput = document.getElementById("schedule-group");
@@ -33,17 +31,17 @@
     var scheduleStatus = document.getElementById("schedule-status");
     var scheduleTableBody = document.getElementById("schedule-table-body");
 
+    // Элементы навигации между страницами
+    var editUniversityButton = document.getElementById("edit-university-info");
+    var editScheduleButton = document.getElementById("edit-schedule-info");
+
+    // Страницы
+    var universityInfoPage = document.getElementById("university-info");
+    var scheduleInfoPage = document.getElementById("schedule-info");
+
     var currentUser = null;
     var currentUniversityId = null;
-
-    // что сейчас редактируем
-    var editingWeekKey = null;
-    var editingDayKey = null;
-    var editingLessonId = null;
-    var editingGroupKey = null;
-
-    // кэш расписания для текущей (выбранной) группы и недели
-    var scheduleByDay = {}; // { "1": [lessons...], "2": [...] }
+    var scheduleByDay = {}; // Кэш расписания { "1": [lessons...], "2": [...] }
 
     var dayNames = {
         1: "Понедельник",
@@ -60,68 +58,86 @@
     }
 
     function getCurrentGroupKey() {
-        if (!scheduleGroupInput) {
-            return "DEFAULT_GROUP";
-        }
-        var value = scheduleGroupInput.value.trim();
-        return value || "DEFAULT_GROUP";
+        return scheduleGroupInput ? scheduleGroupInput.value.trim() || "DEFAULT_GROUP" : "DEFAULT_GROUP";
     }
 
     function generateLessonId() {
         return "L" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     }
 
+    // Отображение панели логина
     function showLogin() {
         loginPanel.classList.remove("hidden");
         adminPanel.classList.add("hidden");
 
         loginStatus.textContent = "";
-        adminStatus.textContent = "";
-        setScheduleStatus("");
-
         currentUser = null;
         currentUniversityId = null;
-
-        editingWeekKey = null;
-        editingDayKey = null;
-        editingLessonId = null;
-        editingGroupKey = null;
-
         scheduleByDay = {};
     }
 
+    // Отображение админ-панели
     function showAdmin() {
         loginPanel.classList.add("hidden");
         adminPanel.classList.remove("hidden");
 
         loginStatus.textContent = "";
-        adminStatus.textContent = "";
-        setScheduleStatus("");
+        scheduleByDay = {};
     }
 
-    function setLoginStatus(message, isError) {
-        loginStatus.textContent = message || "";
-        loginStatus.classList.remove("ok", "err");
-        if (!message) return;
-        loginStatus.classList.add(isError ? "err" : "ok");
+    // Переключение между разделами
+    if (editUniversityButton) {
+        editUniversityButton.addEventListener("click", function () {
+            universityInfoPage.classList.remove("hidden");
+            scheduleInfoPage.classList.add("hidden");
+        });
     }
 
-    function setAdminStatus(message, isError) {
-        adminStatus.textContent = message || "";
-        adminStatus.classList.remove("ok", "err");
-        if (!message) return;
-        adminStatus.classList.add(isError ? "err" : "ok");
+    if (editScheduleButton) {
+        editScheduleButton.addEventListener("click", function () {
+            universityInfoPage.classList.add("hidden");
+            scheduleInfoPage.classList.remove("hidden");
+        });
     }
 
-    function setScheduleStatus(message, isError) {
-        scheduleStatus.textContent = message || "";
-        scheduleStatus.classList.remove("ok", "err");
-        if (!message) return;
-        scheduleStatus.classList.add(isError ? "err" : "ok");
+    // Стартовая страница: редактирование информации о вузе
+    universityInfoPage.classList.remove("hidden");
+    scheduleInfoPage.classList.add("hidden");
+
+    // Сохранение информации о вузе
+    if (saveUniversityButton) {
+        saveUniversityButton.addEventListener("click", function () {
+            if (!currentUniversityId) {
+                setAdminStatus("ID вуза не определён. Войдите заново.", true);
+                return;
+            }
+
+            var name = universityNameInput.value.trim();
+            var description = universityDescriptionInput.value.trim();
+
+            setAdminStatus("Сохраняем информацию о вузе...", false);
+
+            db.collection("universities")
+                .doc(currentUniversityId)
+                .set(
+                    {
+                        name: name,
+                        description: description,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    },
+                    { merge: true }
+                )
+                .then(function () {
+                    setAdminStatus("Информация о вузе сохранена", false);
+                })
+                .catch(function (error) {
+                    console.error("Ошибка сохранения вуза:", error);
+                    setAdminStatus("Ошибка сохранения: " + error.message, true);
+                });
+        });
     }
 
-    // ---------- ВХОД ----------
-
+    // Вход в систему (логика входа как раньше)
     if (loginForm) {
         loginForm.addEventListener("submit", function (e) {
             e.preventDefault();
@@ -148,7 +164,6 @@
                     var doc = querySnapshot.docs[0];
                     var data = doc.data();
 
-                    // учебный вариант: пароль как есть
                     if (data.password !== password) {
                         throw new Error("Неверный пароль");
                     }
@@ -178,7 +193,7 @@
                     universityIdEl.textContent = currentUniversityId;
                     universityIdInlineEl.textContent = currentUniversityId;
 
-                    // Только один раз: если поле группы пустое — подставим группу админа
+                    // Заполняем поле группы только если оно пустое
                     if (scheduleGroupInput && !scheduleGroupInput.value && currentUser.group) {
                         scheduleGroupInput.value = currentUser.group;
                     }
@@ -213,55 +228,13 @@
         });
     }
 
-    // ---------- СОХРАНЕНИЕ ИНФО О ВУЗЕ ----------
-
-    if (saveUniversityButton) {
-        saveUniversityButton.addEventListener("click", function () {
-            if (!currentUniversityId) {
-                setAdminStatus("ID вуза не определён. Войдите заново.", true);
-                return;
-            }
-
-            var name = universityNameInput.value.trim();
-            var description = universityDescriptionInput.value.trim();
-
-            setAdminStatus("Сохраняем информацию о вузе...", false);
-
-            db.collection("universities")
-                .doc(currentUniversityId)
-                .set(
-                    {
-                        name: name,
-                        description: description,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    },
-                    { merge: true }
-                )
-                .then(function () {
-                    setAdminStatus("Информация о вузе сохранена", false);
-                })
-                .catch(function (error) {
-                    console.error("Ошибка сохранения вуза:", error);
-                    setAdminStatus("Ошибка сохранения: " + error.message, true);
-                });
-        });
-    }
-
-    // ---------- ВЫХОД ----------
-
-    if (logoutButton) {
-        logoutButton.addEventListener("click", function () {
-            showLogin();
-        });
-    }
-
     // ---------- РАСПИСАНИЕ ----------
 
     function clearScheduleForm() {
         if (!scheduleDaySelect) return;
 
         scheduleDaySelect.value = "1";
-        // ГРУППУ БОЛЬШЕ НЕ ТРОГАЕМ — админ сам выбирает любую
+        scheduleGroupInput.value = "";
         scheduleStartInput.value = "";
         scheduleEndInput.value = "";
         scheduleSubjectInput.value = "";
@@ -278,7 +251,7 @@
         setScheduleStatus("");
     }
 
-    // чтение: universities/{universityId}/schedule/{groupId}/{weekKey}/{dayKey}
+    // Загрузка расписания для выбранной недели и группы
     function loadSchedule() {
         if (!currentUniversityId || !scheduleTableBody) {
             return Promise.resolve();
@@ -289,10 +262,7 @@
 
         scheduleByDay = {};
 
-        setScheduleStatus(
-            "Загружаем расписание: группа " + groupKey + ", неделя " + weekKey,
-            false
-        );
+        setScheduleStatus("Загружаем расписание: группа " + groupKey + ", неделя " + weekKey, false);
 
         var daysRef = db
             .collection("universities")
@@ -416,6 +386,7 @@
         }
     }
 
+    // Редактирование пары
     function startEditLesson(groupKey, weekKey, dayKey, lesson) {
         editingGroupKey = groupKey;
         editingWeekKey = weekKey;
@@ -443,7 +414,7 @@
         setScheduleStatus("Редактирование пары", false);
     }
 
-    // удаление читаем прямо из БД, чтобы не было рассинхрона
+    // Удаление пары
     function deleteLesson(groupKey, weekKey, dayKey, lessonId) {
         if (!currentUniversityId || !lessonId) return;
 
@@ -472,10 +443,7 @@
             })
             .then(function () {
                 setScheduleStatus("Пара удалена", false);
-                if (editingLessonId === lessonId) {
-                    clearScheduleForm();
-                }
-                return loadSchedule();
+                loadSchedule();
             })
             .catch(function (error) {
                 console.error("Ошибка удаления пары:", error);
@@ -483,6 +451,7 @@
             });
     }
 
+    // Сохранение пары
     if (scheduleSaveButton) {
         scheduleSaveButton.addEventListener("click", function () {
             if (!currentUniversityId) {
@@ -559,7 +528,7 @@
                 .then(function () {
                     setScheduleStatus("Пара сохранена", false);
                     clearScheduleForm();
-                    return loadSchedule();
+                    loadSchedule();
                 })
                 .catch(function (error) {
                     console.error("Ошибка сохранения пары:", error);
@@ -568,13 +537,14 @@
         });
     }
 
+    // Отмена редактирования
     if (scheduleCancelButton) {
         scheduleCancelButton.addEventListener("click", function () {
             clearScheduleForm();
         });
     }
 
-    // смена недели
+    // Смена недели
     if (scheduleWeekSelect) {
         scheduleWeekSelect.addEventListener("change", function () {
             clearScheduleForm();
@@ -582,7 +552,7 @@
         });
     }
 
-    // смена группы — подгружаем другое расписание
+    // Смена группы
     if (scheduleGroupInput) {
         scheduleGroupInput.addEventListener("change", function () {
             clearScheduleForm();
@@ -590,6 +560,5 @@
         });
     }
 
-    // стартовое состояние
     showLogin();
 })();
