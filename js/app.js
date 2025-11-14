@@ -337,6 +337,8 @@
             var lessons = scheduleByDay[dayKey] || [];
             if (!lessons.length) continue;
 
+            console.log(dayKey);
+
             hasLessons = true;
 
             var headerTr = document.createElement("tr");
@@ -384,7 +386,6 @@
                 deleteBtn.classList.add("secondary");
                 deleteBtn.addEventListener("click", function () {
                     deleteLesson(groupKey, weekKey, dayKey, lesson.id);
-                    console.log(dayKey);
                 });
 
                 tdActions.appendChild(editBtn);
