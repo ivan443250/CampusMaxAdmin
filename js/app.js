@@ -383,7 +383,8 @@
                 deleteBtn.textContent = "X";
                 deleteBtn.classList.add("secondary");
                 deleteBtn.addEventListener("click", function () {
-                    deleteLesson(groupKey, weekKey, dayKey, lesson.id);  // Передаем правильный dayKey
+                    deleteLesson(groupKey, weekKey, dayKey, lesson.id);
+                    console.log(dayKey);
                 });
 
                 tdActions.appendChild(editBtn);
