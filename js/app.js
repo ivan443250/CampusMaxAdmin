@@ -19,6 +19,7 @@
     var saveUniversityButton = document.getElementById("save-university");
     var logoutButton = document.getElementById("logout");
 
+    // --- элементы расписания ---
     var scheduleWeekSelect = document.getElementById("schedule-week");
     var scheduleDaySelect = document.getElementById("schedule-day");
     var scheduleGroupInput = document.getElementById("schedule-group");
@@ -38,7 +39,7 @@
     var editingWeekKey = null;
     var editingDayKey = null;
     var editingLessonId = null;
-    var editingGroupKey = null;
+    var editingGroupKey = null; // выбрана группа
 
     var scheduleByDay = {}; // { "1": [lessons...], "2": [...] }
 
@@ -57,11 +58,10 @@
     }
 
     function getCurrentGroupKey() {
-        if (currentUser && currentUser.group) {
-            return currentUser.group;
+        if (scheduleGroupInput) {
+            return scheduleGroupInput.value.trim() || "DEFAULT_GROUP";
         }
-        var g = scheduleGroupInput ? scheduleGroupInput.value.trim() : "";
-        return g || "DEFAULT_GROUP";
+        return "DEFAULT_GROUP";
     }
 
     function generateLessonId() {
@@ -169,8 +169,8 @@
                     universityIdEl.textContent = currentUniversityId;
                     universityIdInlineEl.textContent = currentUniversityId;
 
-                    if (currentUser.group && scheduleGroupInput) {
-                        scheduleGroupInput.value = currentUser.group;
+                    if (scheduleGroupInput) {
+                        scheduleGroupInput.value = currentUser.group || "";
                     }
 
                     showAdmin();
@@ -252,7 +252,7 @@
 
         scheduleDaySelect.value = "1";
         if (!currentUser || !currentUser.group) {
-            scheduleGroupInput.value = scheduleGroupInput.value || "";
+            scheduleGroupInput.value = "";
         } else {
             scheduleGroupInput.value = currentUser.group;
         }
