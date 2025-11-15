@@ -589,9 +589,8 @@
 
     // стартовое состояние
     showLogin();
-})();
 
-(function () {
+    (function () {
     var eventCreateForm = document.getElementById("event-create-form");
     var eventCreateStatus = document.getElementById("event-create-status");
 
@@ -633,7 +632,7 @@
 
             // Сохраняем событие в Firestore
             db.collection("universities")
-                .doc(currentUniversityId)  // Используем currentUniversityId для идентификации университета
+                .doc(currentUniversityId)
                 .collection("events")
                 .add(eventData)
                 .then(function () {
@@ -665,5 +664,8 @@
         document.getElementById("event-buttonText").value = "";
         document.getElementById("event-order").value = "";
     }
+    })();
 })();
+
+
 
