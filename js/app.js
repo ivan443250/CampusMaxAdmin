@@ -332,7 +332,7 @@
         var groupKey = getCurrentGroupKey();
         var hasLessons = false;
 
-        for (let day = 1; day <= 7; day++) {
+        for (let day = 1; day <= 7; day++) {  // Используем let для day
             var dayKey = String(day);
             var lessons = scheduleByDay[dayKey] || [];
             if (!lessons.length) continue;
@@ -382,9 +382,13 @@
                 deleteBtn.type = "button";
                 deleteBtn.textContent = "X";
                 deleteBtn.classList.add("secondary");
-                deleteBtn.addEventListener("click", function () {
-                    deleteLesson(groupKey, weekKey, dayKey, lesson.id);
-                });
+
+                // Используем IIFE (немедленно вызываемая функция) для захвата правильного dayKey
+                deleteBtn.addEventListener("click", (function (dayKey) {
+                    return function () {
+                        deleteLesson(groupKey, weekKey, dayKey, lesson.id);  // Теперь dayKey будет правильно передаваться
+                    };
+                })(dayKey));  // Передаем текущее значение dayKey через IIFE
 
                 tdActions.appendChild(editBtn);
                 tdActions.appendChild(deleteBtn);
