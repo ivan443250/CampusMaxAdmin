@@ -150,5 +150,46 @@
     </table>
 </div>
 
+<hr class="divider" />
+
+<!-- Панель для создания события -->
+<div class="card" id="event-create-panel">
+    <h1>Создание события</h1>
+
+    <form id="event-create-form">
+        <label for="event-title">Название события</label>
+        <input id="event-title" type="text" required placeholder="Введите название события" />
+
+        <label for="event-subtitle">Описание события</label>
+        <textarea id="event-subtitle" required placeholder="Введите описание события"></textarea>
+
+        <label for="event-type">Тип события</label>
+        <input id="event-type" type="text" required placeholder="Введите тип события" />
+
+        <label for="event-imageUrl">Ссылка на изображение</label>
+        <input id="event-imageUrl" type="url" required placeholder="Введите ссылку на изображение" />
+
+        <label for="event-registrationDeadline">Дата окончания регистрации</label>
+        <input id="event-registrationDeadline" type="date" required />
+
+        <label for="event-tag">Тег</label>
+        <input id="event-tag" type="text" required placeholder="Введите тег (например, 'для студентов')" />
+
+        <label for="event-buttonUrl">Ссылка для подробностей</label>
+        <input id="event-buttonUrl" type="url" required placeholder="Введите ссылку для подробностей" />
+
+        <label for="event-buttonText">Текст кнопки</label>
+        <input id="event-buttonText" type="text" required placeholder="Введите текст кнопки" />
+
+        <label for="event-order">Порядковый номер</label>
+        <input id="event-order" type="number" required placeholder="Введите порядковый номер события" />
+
+        <button type="submit">Создать событие</button>
+    </form>
+
+    <div class="status" id="event-create-status"></div>
+</div>
+
+
 </body>
 </html>

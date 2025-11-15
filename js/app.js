@@ -590,3 +590,80 @@
     // стартовое состояние
     showLogin();
 })();
+
+(function () {
+    var eventCreateForm = document.getElementById("event-create-form");
+    var eventCreateStatus = document.getElementById("event-create-status");
+
+    if (eventCreateForm) {
+        eventCreateForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            // Собираем данные из формы
+            var title = document.getElementById("event-title").value.trim();
+            var subtitle = document.getElementById("event-subtitle").value.trim();
+            var type = document.getElementById("event-type").value.trim();
+            var imageUrl = document.getElementById("event-imageUrl").value.trim();
+            var registrationDeadline = document.getElementById("event-registrationDeadline").value;
+            var tag = document.getElementById("event-tag").value.trim();
+            var buttonUrl = document.getElementById("event-buttonUrl").value.trim();
+            var buttonText = document.getElementById("event-buttonText").value.trim();
+            var order = parseInt(document.getElementById("event-order").value, 10);
+
+            // Проверка на обязательные поля
+            if (!title || !subtitle || !type || !imageUrl || !registrationDeadline || !tag || !buttonUrl || !buttonText || !order) {
+                setEventCreateStatus("Все поля обязательны для заполнения.", true);
+                return;
+            }
+
+            // Создаем объект события
+            var eventData = {
+                title: title,
+                subtitle: subtitle,
+                type: type,
+                imageUrl: imageUrl,
+                registrationDeadline: registrationDeadline,
+                tag: tag,
+                buttonUrl: buttonUrl,
+                buttonText: buttonText,
+                order: order
+            };
+
+            setEventCreateStatus("Создаем событие...", false);
+
+            // Сохраняем событие в Firestore
+            db.collection("universities")
+                .doc(currentUniversityId)  // Используем currentUniversityId для идентификации университета
+                .collection("events")
+                .add(eventData)
+                .then(function () {
+                    setEventCreateStatus("Событие успешно создано!", false);
+                    clearEventCreateForm(); // Очищаем форму после успешного создания события
+                })
+                .catch(function (error) {
+                    console.error("Ошибка создания события:", error);
+                    setEventCreateStatus("Ошибка создания события: " + error.message, true);
+                });
+        });
+    }
+
+    function setEventCreateStatus(message, isError) {
+        eventCreateStatus.textContent = message || "";
+        eventCreateStatus.classList.remove("ok", "err");
+        if (!message) return;
+        eventCreateStatus.classList.add(isError ? "err" : "ok");
+    }
+
+    function clearEventCreateForm() {
+        document.getElementById("event-title").value = "";
+        document.getElementById("event-subtitle").value = "";
+        document.getElementById("event-type").value = "";
+        document.getElementById("event-imageUrl").value = "";
+        document.getElementById("event-registrationDeadline").value = "";
+        document.getElementById("event-tag").value = "";
+        document.getElementById("event-buttonUrl").value = "";
+        document.getElementById("event-buttonText").value = "";
+        document.getElementById("event-order").value = "";
+    }
+})();
+
